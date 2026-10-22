@@ -9,6 +9,7 @@ import {
   type AdminResultRecord,
   type AdminResultsPayload,
 } from "@/lib/admin-results";
+import { formatClassPosition } from "@/lib/results/format";
 
 function responseError(payload: unknown, fallback: string) {
   if (
@@ -114,9 +115,8 @@ export default function AdminResultsReview() {
     0
   );
   const average =
-    enteredScores.length === 0
-      ? 0
-      : aggregate / enteredScores.length;
+    selectedResult?.overallAverage ??
+    (enteredScores.length === 0 ? 0 : aggregate / enteredScores.length);
 
   async function review(action: "approve" | "return") {
     if (!selectedResult || !isPending) return;
@@ -146,13 +146,26 @@ export default function AdminResultsReview() {
         throw new Error(responseError(payload, "Unable to update this result."));
       }
 
+      const ranking =
+        typeof payload === "object" &&
+        payload !== null &&
+        "ranking" in payload &&
+        typeof payload.ranking === "object" &&
+        payload.ranking !== null &&
+        "classSize" in payload.ranking &&
+        typeof payload.ranking.classSize === "number"
+          ? payload.ranking
+          : null;
+
       const updated = await reload();
       setData(updated);
       setSelectedId(selectedResult.id);
       setRejectionReason("");
       setNotice(
         action === "approve"
-          ? "Result approved. It is ready for publication."
+          ? ranking
+            ? `Result approved. Class positions have been assigned for ${ranking.classSize} students.`
+            : "Result approved. Positions will be assigned when every result in this class is approved."
           : "Result returned to the teacher with your correction note."
       );
       if (!updated.results.some((result) => result.id === selectedResult.id)) {
@@ -367,7 +380,13 @@ export default function AdminResultsReview() {
                           {average.toFixed(1)}%
                         </td>
                         <td className="px-space-sm py-space-sm text-center">
-                          {enteredScores.length}/{selectedResult.subjects.length} scored
+                          {formatClassPosition(
+                            selectedResult.classPosition,
+                            selectedResult.classSize
+                          )}
+                          <span className="ml-1 font-normal text-on-surface-variant">
+                            ({enteredScores.length}/{selectedResult.subjects.length} scored)
+                          </span>
                         </td>
                       </tr>
                     </tfoot>

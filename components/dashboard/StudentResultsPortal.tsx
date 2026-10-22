@@ -132,7 +132,7 @@ export default function StudentResultsPortal() {
               <SubjectLedger />
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg">
                 <GradingScale />
-                <PsychomotorGrid />
+                <PsychomotorGrid ratings={selectedResult?.psychomotor} />
               </div>
               <SignoffRow />
             </>

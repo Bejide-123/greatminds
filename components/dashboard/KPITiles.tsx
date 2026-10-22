@@ -2,6 +2,7 @@ import { Sparkles, School, GraduationCap, Trophy } from "lucide-react";
 import { KPI_TILES } from "@/lib/results-data";
 import { useStudentResult } from "@/components/dashboard/StudentResultContext";
 import { computeGrade } from "@/lib/gradebook-data";
+import { formatOrdinal } from "@/lib/results/format";
 
 const ICON_MAP = {
   auto_awesome: Sparkles,
@@ -17,15 +18,23 @@ export default function KPITiles() {
     (sum, subject) => sum + subject.totalScore,
     0
   );
-  const average = subjects.length > 0 ? aggregate / subjects.length : 0;
+  const average =
+    selectedResult?.overallAverage ??
+    (subjects.length > 0 ? aggregate / subjects.length : 0);
   const averageGrade =
     subjects.length > 0 ? computeGrade(average).grade : "—";
+  const classPosition = selectedResult?.classPosition ?? null;
+  const classSize = selectedResult?.classSize ?? null;
   const tiles = KPI_TILES.map((tile, index) => {
     if (index === 0) {
       return {
         ...tile,
         value: `${average.toFixed(1)}%`,
-        note: "Overall subject average",
+        note:
+          selectedResult?.classAverage !== null &&
+          selectedResult?.classAverage !== undefined
+            ? `Class avg: ${selectedResult.classAverage.toFixed(1)}%`
+            : "Overall subject average",
       };
     }
     if (index === 1) {
@@ -41,9 +50,15 @@ export default function KPITiles() {
     }
     return {
       ...tile,
-      value: "—",
-      suffix: "Not available",
-      note: "Class position is not recorded",
+      value: classPosition === null ? "—" : formatOrdinal(classPosition),
+      suffix:
+        classPosition === null || classSize === null
+          ? "Not available"
+          : `in class (out of ${classSize})`,
+      note:
+        classPosition === null
+          ? "Class position is assigned after every result in the class is approved"
+          : "Class position",
     };
   });
 

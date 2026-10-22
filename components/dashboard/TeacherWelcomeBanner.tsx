@@ -1,15 +1,65 @@
 "use client";
 
-import {
-  Smile,
-  BadgeCheck,
-  CalendarDays,
-  Baby,
-} from "lucide-react";
+import { Smile, BadgeCheck, CalendarDays, Baby } from "lucide-react";
 import { useUser } from "@/components/auth/UserProvider";
+import { useEffect, useState } from "react";
+
+type CurrentAcademicContext = {
+  session: {
+    id: string;
+    name: string;
+  };
+  term: {
+    id: string;
+    name: "FIRST" | "SECOND" | "THIRD";
+    nextTermBegins: string | null;
+  };
+};
+
+const TERM_LABELS = {
+  FIRST: "First Term",
+  SECOND: "Second Term",
+  THIRD: "Third Term",
+};
 
 export default function TeacherWelcomeBanner() {
   const { user } = useUser();
+  const [academicContext, setAcademicContext] =
+    useState<CurrentAcademicContext | null>(null);
+  const [academicError, setAcademicError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchCurrentAcademicContext() {
+      try {
+        const response = await fetch("/api/academic/current", {
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error("Could not fetch current academic context.");
+        }
+
+        const data: CurrentAcademicContext = await response.json();
+
+        if (!cancelled) {
+          setAcademicContext(data);
+          setAcademicError(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setAcademicError(true);
+        }
+      }
+    }
+
+    fetchCurrentAcademicContext();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="relative overflow-hidden rounded-xl bg-primary text-on-primary shadow-xl">
@@ -50,12 +100,18 @@ export default function TeacherWelcomeBanner() {
             <div className="flex flex-wrap items-center gap-space-sm mt-space-sm">
               <span className="font-label-md text-label-sm bg-surface-container-lowest/10 text-surface-container-lowest px-space-sm py-1 rounded-full flex items-center gap-1.5">
                 <CalendarDays className="w-4 h-4 text-secondary-fixed" />
-                2024/2025 Session • First Term
+                {academicContext
+                  ? `${academicContext.session.name} Session • ${
+                      TERM_LABELS[academicContext.term.name]
+                    }`
+                  : academicError
+                    ? "Academic details unavailable"
+                    : "Loading academic details..."}
               </span>
-              <span className="font-label-md text-label-sm bg-tertiary-container text-on-tertiary-container px-space-sm py-1 rounded-full flex items-center gap-1.5">
+              {/* <span className="font-label-md text-label-sm bg-tertiary-container text-on-tertiary-container px-space-sm py-1 rounded-full flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500" />
                 Active Term Ledger: Day 64 of 85
-              </span>
+              </span> */}
               <span className="font-label-md text-label-sm bg-secondary-container/20 text-secondary-fixed px-space-sm py-1 rounded-full flex items-center gap-1.5">
                 <Baby className="w-4 h-4" />
                 24 Pupils on Roll

@@ -1,3 +1,4 @@
+'use client'
 import {
   ShieldCheck,
   Award,
@@ -6,8 +7,11 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { TEACHER_NOTE, TERM_METRICS, TOP_SUBJECTS } from "@/lib/dashboard-data";
+import { useUser } from "@/components/auth/UserProvider";
 
 export default function TerminalSpotlight() {
+  const { user } = useUser();
+
   return (
     <section className="mb-space-xl">
       <div className="rounded-xl bg-surface-container-lowest shadow-sm border border-surface-container-high overflow-hidden">

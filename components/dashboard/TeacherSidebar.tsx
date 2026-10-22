@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { CREST, NAV_ITEMS } from "@/lib/teacher-data";
 import LogoutButton from "./LogoutButton";
+import { useUser } from "@/components/auth/UserProvider";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   grid: LayoutGrid,
@@ -25,6 +26,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 };
 
 export default function TeacherSidebar() {
+  const { user } = useUser();
   const pathname = usePathname();
 
   return (
@@ -132,7 +134,7 @@ export default function TeacherSidebar() {
               Class Sync Status
             </span>
             <span className="font-body-sm text-[11px] text-primary-fixed-dim">
-              Basic 4 Diamond • Roster Live
+              {user?.className}
             </span>
           </div>
         </div>

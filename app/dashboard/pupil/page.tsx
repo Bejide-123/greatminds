@@ -9,9 +9,9 @@ import SchoolBulletins from "@/components/dashboard/SchoolBulletins";
 import TermCalendar from "@/components/dashboard/TermCalendar";
 
 export const metadata: Metadata = {
-  title: "Pupil Dashboard — Great Minds Nursery & Primary",
+  title: "Pupil Dashboard — Greatminds International School",
   description:
-    "Basic 4 Diamond pupil portal — terminal results, schedule, homework, and school bulletins.",
+    "Pupil portal — terminal results, schedule, homework, and school bulletins.",
 };
 
 export default function PupilDashboardPage() {

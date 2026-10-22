@@ -3,7 +3,7 @@
 "use client";
 
 import { ChevronRight, CalendarDays, Bell } from "lucide-react";
-import { CURRENT_TERM } from "@/lib/dashboard-data";
+// import { CURRENT_TERM } from "@/lib/dashboard-data";
 import { useUser } from "@/components/auth/UserProvider";
 
 export default function Header() {
@@ -29,12 +29,12 @@ export default function Header() {
           </span>
         </div>
         <div className="h-4 w-px bg-surface-container-highest" />
-        <div className="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-1 rounded-full border border-surface-container-highest">
+        {/* <div className="flex items-center gap-space-xs bg-surface-container-low px-space-sm py-1 rounded-full border border-surface-container-highest">
           <CalendarDays className="w-4 h-4 text-secondary-container" />
           <span className="font-label-md text-label-sm text-primary font-bold">
             {CURRENT_TERM}
           </span>
-        </div>
+        </div> */}
       </div>
 
       <div className="flex items-center gap-space-lg">

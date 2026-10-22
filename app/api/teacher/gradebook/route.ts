@@ -41,6 +41,9 @@ export async function GET() {
             teacherRemark: true,
             rejectionReason: true,
             psychomotor: true,
+            overallAverage: true,
+            classPosition: true,
+            classSize: true,
             subjects: {
               select: {
                 subjectId: true,
@@ -76,6 +79,12 @@ export async function GET() {
           sex: student.sex,
           dateOfBirth: student.dateOfBirth.toISOString(),
           status: result?.status ?? null,
+          overallAverage:
+            result?.overallAverage === null || result?.overallAverage === undefined
+              ? null
+              : Number(result.overallAverage),
+          classPosition: result?.classPosition ?? null,
+          classSize: result?.classSize ?? null,
           teacherRemark: result?.teacherRemark ?? "",
           psychomotor: result?.psychomotor ?? {},
           rejectionReason: result?.rejectionReason ?? null,

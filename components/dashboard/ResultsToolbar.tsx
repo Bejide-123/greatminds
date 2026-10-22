@@ -32,12 +32,53 @@ export default function ResultsToolbar() {
     window.print();
   }
 
-  function handleDownload() {
+  async function handleDownload() {
+    if (!selectedResult || !studentResultIsApproved(selectedResult)) return;
     setDownloading(true);
-    setTimeout(() => {
+    try {
+      const response = await fetch(
+        `/api/student/results/${encodeURIComponent(selectedResult.id)}/pdf`
+      );
+
+      if (!response.ok) {
+        let msg = "Unable to download report sheet.";
+        try {
+          const err: unknown = await response.json();
+          if (
+            typeof err === "object" &&
+            err !== null &&
+            "error" in err &&
+            typeof (err as { error: unknown }).error === "string"
+          ) {
+            msg = (err as { error: string }).error;
+          }
+        } catch {
+          // fallback
+        }
+        throw new Error(msg);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const safeName = (data.student.name || "Student").replace(
+        /[^a-zA-Z0-9_-]/g,
+        "_"
+      );
+      a.download = `${safeName}_${selectedResult.term.name}_Term_Report.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      console.error("PDF download error:", err);
+      window.alert(
+        err instanceof Error ? err.message : "Unable to download report sheet."
+      );
+    } finally {
       setDownloading(false);
-      window.print();
-    }, 600);
+    }
   }
 
   return (
@@ -123,13 +164,18 @@ export default function ResultsToolbar() {
         <button
           type="button"
           onClick={handleDownload}
-          disabled={downloading}
-          className="inline-flex items-center gap-1.5 bg-secondary-container hover:bg-secondary text-on-secondary font-title-md text-body-sm px-space-lg py-2 rounded-lg shadow-sm transition-all active:scale-95 disabled:opacity-90"
+          disabled={downloading || !selectedResult || !studentResultIsApproved(selectedResult)}
+          title={
+            selectedResult && studentResultIsApproved(selectedResult)
+              ? "Download Certified PDF Report Sheet"
+              : "Report sheet is available after approval"
+          }
+          className="inline-flex items-center gap-1.5 bg-secondary-container hover:bg-secondary text-on-secondary font-title-md text-body-sm px-space-lg py-2 rounded-lg shadow-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {downloading ? (
             <>
               <Loader2 className="w-[18px] h-[18px] animate-spin" />
-              <span>Compiling Official PDF...</span>
+              <span>Generating Official PDF...</span>
             </>
           ) : (
             <>

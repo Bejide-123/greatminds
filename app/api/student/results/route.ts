@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/guard";
 import { fullName } from "@/lib/admin-results";
 import { prisma } from "@/lib/prisma";
+import {
+  getClassAverage,
+  getClassSubjectMetrics,
+} from "@/lib/results/rankings";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -41,10 +45,16 @@ export async function GET() {
     orderBy: [{ updatedAt: "desc" }],
     select: {
       id: true,
+      classId: true,
+      termId: true,
       status: true,
       reviewedAt: true,
       teacherRemark: true,
       headTeacherRemark: true,
+      overallAverage: true,
+      classPosition: true,
+      classSize: true,
+      psychomotor: true,
 
       teacher: {
         select: {
@@ -66,6 +76,7 @@ export async function GET() {
         orderBy: { subject: { sortOrder: "asc" } },
         select: {
           id: true,
+          subjectId: true,
           caScore: true,
           examScore: true,
           totalScore: true,
@@ -77,6 +88,33 @@ export async function GET() {
     },
   });
 
+  const finalizedPairs = Array.from(
+    new Set(
+      results
+        .filter(
+          (r) =>
+            (r.status === "APPROVED" || r.status === "PUBLISHED") &&
+            r.classPosition !== null
+        )
+        .map((r) => `${r.classId}:::${r.termId}`)
+    )
+  ).map((key) => {
+    const [classId, termId] = key.split(":::");
+    return { classId, termId, key };
+  });
+
+  const pairMetricsList = await Promise.all(
+    finalizedPairs.map(async ({ classId, termId, key }) => {
+      const [classAverage, subjectMetrics] = await Promise.all([
+        getClassAverage(classId, termId),
+        getClassSubjectMetrics(classId, termId),
+      ]);
+      return { key, classAverage, subjectMetrics };
+    })
+  );
+
+  const metricsMap = new Map(pairMetricsList.map((m) => [m.key, m]));
+
   return NextResponse.json(
     {
       student: {
@@ -87,6 +125,10 @@ export async function GET() {
       results: results.map((result) => {
         const approved =
           result.status === "APPROVED" || result.status === "PUBLISHED";
+        const finalized = approved && result.classPosition !== null;
+        const metrics = finalized
+          ? metricsMap.get(`${result.classId}:::${result.termId}`) ?? null
+          : null;
 
         return {
           id: result.id,
@@ -96,6 +138,16 @@ export async function GET() {
 
           teacherRemark: result.teacherRemark ?? "",
           headTeacherRemark: result.headTeacherRemark ?? "",
+          overallAverage:
+            approved && result.overallAverage !== null
+              ? Number(result.overallAverage)
+              : null,
+          classAverage: metrics?.classAverage ?? null,
+          classPosition: approved ? result.classPosition : null,
+          classSize: approved ? result.classSize : null,
+          psychomotor: approved
+            ? (result.psychomotor as Record<string, number | null> | null)
+            : null,
           teacherName: [
             result.teacher.firstName,
             result.teacher.otherName,
@@ -119,6 +171,12 @@ export async function GET() {
                 ) {
                   return [];
                 }
+
+                const subjectMetric =
+                  metrics?.subjectMetrics.metricsByResultSubject.get(
+                    `${result.id}:${subject.subjectId}`
+                  );
+
                 return [
                   {
                     id: subject.id,
@@ -129,6 +187,8 @@ export async function GET() {
                     totalScore: Number(subject.totalScore),
                     grade: subject.grade,
                     remark: subject.remark,
+                    classAverage: subjectMetric?.classAverage ?? null,
+                    subjectPosition: subjectMetric?.subjectPosition ?? null,
                   },
                 ];
               })

@@ -46,7 +46,7 @@ export default function WelcomeHero() {
 
             <div className="flex flex-wrap items-center gap-space-sm mt-space-md">
               <a
-                href="#"
+                href="/dashboard/pupil/results"
                 className="inline-flex items-center gap-space-xs bg-secondary-container hover:bg-secondary text-on-secondary px-space-lg py-2 rounded-lg font-title-md text-body-md font-bold shadow-md transition-colors"
               >
                 <FileText className="w-[18px] h-[18px]" />

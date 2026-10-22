@@ -12,9 +12,9 @@ import CurriculumSubjects from "@/components/dashboard/CurriculumSubjects";
 import ValidationStrip from "@/components/dashboard/ValidationStrip";
 
 export const metadata: Metadata = {
-  title: "Teacher Dashboard — Great Minds Nursery & Primary",
+  title: "Teacher Dashboard — Greatminds International School",
   description:
-    "Basic 4 Diamond class teacher portal — assessment ledger, psychomotor ratings, and broadsheet submission.",
+    "Class teacher portal — assessment ledger, psychomotor ratings, and broadsheet submission.",
 };
 
 export default function TeacherDashboardPage() {

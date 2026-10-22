@@ -98,6 +98,9 @@ export type GradebookStudent = {
   sex: "MALE" | "FEMALE";
   dateOfBirth: string;
   status: string | null;
+  overallAverage?: number | null;
+  classPosition?: number | null;
+  classSize?: number | null;
   teacherRemark?: string | null;
   headTeacherRemark?: string | null;
   rejectionReason?: string | null;

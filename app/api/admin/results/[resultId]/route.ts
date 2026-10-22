@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/guard";
 import { prisma } from "@/lib/prisma";
+import { tryFinalizeClassPositions } from "@/lib/results/rankings";
 
 const reviewSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("approve") }),
@@ -35,7 +36,7 @@ export async function PATCH(
   const { resultId } = await params;
   const existing = await prisma.result.findUnique({
     where: { id: resultId },
-    select: { status: true },
+    select: { status: true, classId: true, termId: true },
   });
   if (!existing) {
     return NextResponse.json({ error: "Result not found." }, { status: 404 });
@@ -74,7 +75,19 @@ export async function PATCH(
     );
   }
 
+  if (parsed.data.action === "approve") {
+    const ranking = await tryFinalizeClassPositions(
+      existing.classId,
+      existing.termId
+    );
+    return NextResponse.json({
+      status: "APPROVED",
+      ranking,
+    });
+  }
+
   return NextResponse.json({
-    status: parsed.data.action === "approve" ? "APPROVED" : "REJECTED",
+    status: "REJECTED",
+    ranking: null,
   });
 }

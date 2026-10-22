@@ -136,7 +136,7 @@ model Student {
   guardianPhone String // String, not Int — leading zero / +234
   guardianEmail String?
 
-  // photoUrl String?  // later
+  photoUrl String?  
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -157,6 +157,7 @@ model Teacher {
   email       String        @unique
   phone       String?
   classId     String
+  photoUrl    String?
   schoolClass SchoolClass   @relation(fields: [classId], references: [id])
   status      TeacherStatus @default(ACTIVE)
 
@@ -202,6 +203,7 @@ model Result {
 
   overallAverage Decimal? @db.Decimal(5, 2)
   classPosition  Int?
+  classSize      Int?   
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

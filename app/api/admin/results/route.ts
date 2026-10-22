@@ -30,9 +30,14 @@ export async function GET(request: Request) {
           id: true,
           status: true,
           rejectionReason: true,
+          teacherRemark: true,
+          headTeacherRemark: true,
           submittedAt: true,
           reviewedAt: true,
           updatedAt: true,
+          overallAverage: true,
+          classPosition: true,
+          classSize: true,
           student: {
             select: {
               id: true,
@@ -75,6 +80,8 @@ export async function GET(request: Request) {
         id: result.id,
         status: result.status,
         rejectionReason: result.rejectionReason,
+        teacherRemark: result.teacherRemark,
+        headTeacherRemark: result.headTeacherRemark,
         submittedAt: result.submittedAt?.toISOString() ?? null,
         reviewedAt: result.reviewedAt?.toISOString() ?? null,
         updatedAt: result.updatedAt.toISOString(),
@@ -93,6 +100,10 @@ export async function GET(request: Request) {
           name: result.term.name,
           sessionName: result.term.session.name,
         },
+        overallAverage:
+          result.overallAverage === null ? null : Number(result.overallAverage),
+        classPosition: result.classPosition,
+        classSize: result.classSize,
         subjects: result.subjects.map((row) => ({
           id: row.id,
           subjectName: row.subject.name,

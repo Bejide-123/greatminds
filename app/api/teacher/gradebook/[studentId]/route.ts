@@ -4,7 +4,12 @@ import { getCurrentUser } from "@/lib/auth/guard";
 import { computeGrade } from "@/lib/gradebook-data";
 import { getTeacherGradebookContext } from "@/lib/gradebook-service";
 import { prisma } from "@/lib/prisma";
-import { PSYCHOMOTOR_KEYS } from "@/lib/gradebook-api";
+import { calculateOverallAverage } from "@/lib/results/rankings";
+import {
+  EMPTY_PSYCHOMOTOR,
+  normalisePsychomotor,
+  PSYCHOMOTOR_KEYS,
+} from "@/lib/gradebook-api";
 
 
 const psychomotorRatingSchema = z
@@ -45,7 +50,9 @@ const scoreSchema = z.object({
 
   teacherRemark: z.string().max(1500).default(""),
 
-  psychomotor: psychomotorSchema,
+  psychomotor: z
+    .preprocess((val) => normalisePsychomotor(val), psychomotorSchema)
+    .default(EMPTY_PSYCHOMOTOR),
 
   scores: z
     .array(
@@ -259,22 +266,31 @@ export async function PUT(
         await tx.resultSubject.createMany({ data: activeScores });
       }
 
+      const overallAverage = calculateOverallAverage(
+        activeScores.map((score) => score.totalScore)
+      );
+
       return tx.result.update({
         where: { id: resultId },
-        
-
         data: {
+          overallAverage,
+          classPosition: null,
+          classSize: null,
           psychomotor: parsed.data.psychomotor,
           teacherRemark: parsed.data.teacherRemark.trim() || null,
           status: parsed.data.action === "submit" ? "SUBMITTED" : "DRAFT",
           submittedAt: parsed.data.action === "submit" ? new Date() : null,
           rejectionReason: null,
         },
-        select: { status: true, teacherRemark: true },
+        select: { status: true, teacherRemark: true, overallAverage: true },
       });
     }, { timeout: 15_000 });
 
-    return NextResponse.json({ status: result.status });
+    return NextResponse.json({
+      status: result.status,
+      overallAverage:
+        result.overallAverage === null ? null : Number(result.overallAverage),
+    });
   } catch (error) {
     if (error instanceof GradebookRequestError) {
       return NextResponse.json({ error: error.message }, { status: error.status });

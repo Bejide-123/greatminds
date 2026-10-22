@@ -16,6 +16,7 @@ import {
   normalisePsychomotor,
   PSYCHOMOTOR_TRAITS
 } from "@/lib/gradebook-api";
+import { computeGrade } from "@/lib/gradebook-data";
 
 function responseError(payload: unknown, fallback: string) {
   if (
@@ -187,6 +188,7 @@ export default function TeacherGradebook() {
           body: JSON.stringify({
             teacherRemark,
             action,
+            psychomotor: normalisePsychomotor(psychomotor),
             scores: data.subjects.map((subject) => {
               const score = scores.find(
                 (item) => item.subjectId === subject.id,
@@ -217,6 +219,26 @@ export default function TeacherGradebook() {
       }
 
       const savedStatus = payload.status;
+      const returnedAverage =
+        "overallAverage" in payload &&
+        typeof (payload as { overallAverage?: unknown }).overallAverage === "number"
+          ? (payload as { overallAverage: number }).overallAverage
+          : null;
+
+      const updatedScores: GradebookScore[] = data.subjects.map((subject) => {
+        const score = scores.find((item) => item.subjectId === subject.id);
+        const ca = score?.caScore ?? null;
+        const exam = score?.examScore ?? null;
+        const total = ca !== null && exam !== null ? ca + exam : null;
+        return {
+          subjectId: subject.id,
+          caScore: ca,
+          examScore: exam,
+          totalScore: total,
+          grade: total === null ? null : computeGrade(total).grade,
+        };
+      });
+
       setData((current) =>
         current
           ? {
@@ -227,32 +249,16 @@ export default function TeacherGradebook() {
                       ...student,
                       status: savedStatus,
                       teacherRemark,
-                      psychomotor,
-                      scores: scores.map((score) => {
-                        if (
-                          score.caScore === null ||
-                          score.examScore === null
-                        ) {
-                          return { ...score, totalScore: null, grade: null };
-                        }
-                        return {
-                          ...score,
-                          totalScore: score.caScore + score.examScore,
-                        };
-                      }),
+                      psychomotor: normalisePsychomotor(psychomotor),
+                      overallAverage: returnedAverage ?? student.overallAverage,
+                      scores: updatedScores,
                     }
                   : student,
               ),
             }
           : current,
       );
-      setScores((current) =>
-        current.map((score) =>
-          score.caScore === null || score.examScore === null
-            ? { ...score, totalScore: null, grade: null }
-            : { ...score, totalScore: score.caScore + score.examScore },
-        ),
-      );
+      setScores(updatedScores);
       setDirty(false);
       setNotice(
         action === "submit"
@@ -376,7 +382,13 @@ export default function TeacherGradebook() {
                 pupil={selectedStudent}
                 className={data.class.name}
               />
-              <PupilKPITiles subjects={data.subjects} scores={scores} />
+              <PupilKPITiles
+                subjects={data.subjects}
+                scores={scores}
+                overallAverage={selectedStudent.overallAverage}
+                classPosition={selectedStudent.classPosition}
+                classSize={selectedStudent.classSize}
+              />
             </div>
 
             <SubjectEntryTable

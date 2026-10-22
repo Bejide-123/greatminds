@@ -12,6 +12,8 @@ export type AdminResultRecord = {
   id: string;
   status: "SUBMITTED" | "UNDER_REVIEW" | "APPROVED" | "REJECTED" | "PUBLISHED";
   rejectionReason: string | null;
+  teacherRemark: string | null;
+  headTeacherRemark: string | null;
   submittedAt: string | null;
   reviewedAt: string | null;
   updatedAt: string;
@@ -23,6 +25,9 @@ export type AdminResultRecord = {
   schoolClass: { id: string; name: string };
   teacher: { id: string; name: string };
   term: { id: string; name: "FIRST" | "SECOND" | "THIRD"; sessionName: string };
+  overallAverage: number | null;
+  classPosition: number | null;
+  classSize: number | null;
   subjects: AdminResultSubject[];
 };
 
