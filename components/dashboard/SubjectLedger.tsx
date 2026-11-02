@@ -2,6 +2,7 @@ import { BookOpen } from "lucide-react";
 import { SUBJECTS } from "@/lib/results-data";
 import { useStudentResult } from "@/components/dashboard/StudentResultContext";
 import { computeGrade } from "@/lib/gradebook-data";
+import { formatClassPosition, formatOrdinal } from "@/lib/results/format";
 
 export default function SubjectLedger() {
   const { selectedResult } = useStudentResult();
@@ -84,11 +85,15 @@ export default function SubjectLedger() {
                     {subject.grade ?? "—"}
                   </span>
                 </td>
-                <td className="py-2.5 px-space-sm text-center font-tabular-data text-outline">
-                  —
+                <td className="py-2.5 px-space-sm text-center font-tabular-data font-semibold text-on-surface-variant">
+                  {subject.classAverage !== null && subject.classAverage !== undefined
+                    ? subject.classAverage.toFixed(1)
+                    : "—"}
                 </td>
-                <td className="py-2.5 px-space-sm text-center font-tabular-data font-medium">
-                  —
+                <td className="py-2.5 px-space-sm text-center font-tabular-data font-medium text-secondary-container">
+                  {subject.subjectPosition !== null && subject.subjectPosition !== undefined
+                    ? formatOrdinal(subject.subjectPosition)
+                    : "—"}
                 </td>
               </tr>
               );
@@ -111,11 +116,16 @@ export default function SubjectLedger() {
               <td className="py-3 px-space-sm text-center font-bold text-secondary-container">
                 {aggregateGrade}
               </td>
-              <td className="py-3 px-space-sm text-center font-tabular-data text-outline">
-                —
+              <td className="py-3 px-space-sm text-center font-tabular-data font-bold text-primary">
+                {selectedResult?.classAverage !== null && selectedResult?.classAverage !== undefined
+                  ? `${selectedResult.classAverage.toFixed(1)}%`
+                  : "—"}
               </td>
               <td className="py-3 px-space-sm text-center font-bold text-secondary-container">
-                —
+                {formatClassPosition(
+                  selectedResult?.classPosition,
+                  selectedResult?.classSize
+                )}
               </td>
               {/* <td className="py-3 px-space-md font-label-md text-label-sm text-on-surface-variant">
                 —

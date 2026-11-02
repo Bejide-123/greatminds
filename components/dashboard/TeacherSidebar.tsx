@@ -12,8 +12,9 @@ import {
   Clock,
   type LucideIcon,
 } from "lucide-react";
-import { CREST, NAV_ITEMS } from "@/lib/teacher-data";
+import { NAV_ITEMS } from "@/lib/teacher-data";
 import LogoutButton from "./LogoutButton";
+import { useUser } from "@/components/auth/UserProvider";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   grid: LayoutGrid,
@@ -25,6 +26,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 };
 
 export default function TeacherSidebar() {
+  const { user } = useUser();
   const pathname = usePathname();
 
   return (
@@ -33,7 +35,7 @@ export default function TeacherSidebar() {
         {/* Logo */}
         <div className="h-16 px-space-lg flex items-center gap-space-sm bg-[#08152b]">
           <Image
-            src={CREST}
+            src="/Greatminds-International-School-Crest.png"
             alt="Great Minds Nursery and Primary School Crest"
             width={36}
             height={36}
@@ -132,7 +134,7 @@ export default function TeacherSidebar() {
               Class Sync Status
             </span>
             <span className="font-body-sm text-[11px] text-primary-fixed-dim">
-              Basic 4 Diamond • Roster Live
+              {user?.className}
             </span>
           </div>
         </div>

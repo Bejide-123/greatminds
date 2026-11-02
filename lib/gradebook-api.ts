@@ -98,9 +98,13 @@ export type GradebookStudent = {
   sex: "MALE" | "FEMALE";
   dateOfBirth: string;
   status: string | null;
+  overallAverage?: number | null;
+  classPosition?: number | null;
+  classSize?: number | null;
   teacherRemark?: string | null;
   headTeacherRemark?: string | null;
   rejectionReason?: string | null;
+  attendance?: number | null;
   scores: GradebookScore[];
   psychomotor?: PsychomotorRatings | null; // ← NEW
 };
@@ -174,6 +178,13 @@ export function isGradebookData(value: unknown): value is GradebookData {
         s.psychomotor !== undefined &&
         s.psychomotor !== null &&
         typeof s.psychomotor !== "object"
+      ) {
+        return false;
+      }
+      if (
+        s.attendance !== undefined &&
+        s.attendance !== null &&
+        typeof s.attendance !== "number"
       ) {
         return false;
       }

@@ -13,6 +13,7 @@ export const NAV_ITEMS = [
   { key: "students", href: "/dashboard/admin/students", label: "Students", icon: "users" },
   { key: "staff", href: "/dashboard/admin/staff", label: "Staff", icon: "badge" },
   { key: "fees", href: "/dashboard/admin/fees", label: "Fees & Billing", icon: "payments", badge: { text: "Soon", color: "bg-surface-container-lowest/10 text-outline-variant" } },
+  { key: "broadsheet", href: "/dashboard/admin/broadsheet", label: "Broadsheet", icon: "table" },
 ] as const;
 
 export const METRICS = [

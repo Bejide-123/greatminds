@@ -1,7 +1,4 @@
 // lib/auth/guards.ts
-// Use these inside pages, server components and server actions.
-// The proxy is only a quick gate; THIS is the real check (it hits the database,
-// so a deactivated user loses access immediately, not when the JWT expires).
 import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
@@ -23,19 +20,22 @@ export const getCurrentUser = cache(async () => {
       mustChangePassword: true,
       student: {
         select: {
+          id: true,                     // ← ADD
           firstName: true,
           otherName: true,
           surname: true,
           admissionNumber: true,
-          schoolClass: { select: { name: true } },
+          schoolClass: { select: { id: true, name: true } }, // ← add id
         },
       },
       teacher: {
         select: {
+          id: true,                     // ← ADD
           firstName: true,
           otherName: true,
           surname: true,
-          schoolClass: { select: { name: true } },
+          classId: true,                // ← ADD
+          schoolClass: { select: { id: true, name: true } }, // ← add id
         },
       },
     },

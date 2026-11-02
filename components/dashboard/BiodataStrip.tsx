@@ -1,8 +1,9 @@
 import { BIODATA } from "@/lib/results-data";
 import { useStudentResult } from "@/components/dashboard/StudentResultContext";
+import { formatClassPosition } from "@/lib/results/format";
 
 export default function BiodataStrip() {
-  const { data } = useStudentResult();
+  const { data, selectedResult } = useStudentResult();
   const biodata = BIODATA.map((item) => {
     if (item.label === "Pupil's Full Name") {
       return { ...item, value: data.student.name };
@@ -11,10 +12,25 @@ export default function BiodataStrip() {
       return { ...item, value: data.student.admissionNumber };
     }
     if (item.label === "Class / Arm") {
-      return { ...item, value: data.student.className };
+      return { ...item, value: selectedResult?.schoolClass ?? data.student.className };
     }
     if (item.label === "Class Size") {
-      return { ...item, value: "—" };
+      return {
+        ...item,
+        value:
+          selectedResult?.classSize == null
+            ? "—"
+            : `${selectedResult.classSize} Pupils`,
+      };
+    }
+    if (item.label === "Class Position") {
+      return {
+        ...item,
+        value: formatClassPosition(
+          selectedResult?.classPosition,
+          selectedResult?.classSize
+        ),
+      };
     }
     return { ...item, value: "—" };
   });

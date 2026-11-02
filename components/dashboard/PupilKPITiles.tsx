@@ -1,14 +1,21 @@
 import { BarChart3, ClipboardCheck, Trophy } from "lucide-react";
 import { type GradebookScore, type GradebookSubject } from "@/lib/gradebook-api";
+import { formatClassPosition } from "@/lib/results/format";
 
 type PupilKPITilesProps = {
   subjects: GradebookSubject[];
   scores: GradebookScore[];
+  overallAverage?: number | null;
+  classPosition?: number | null;
+  classSize?: number | null;
 };
 
 export default function PupilKPITiles({
   subjects,
   scores,
+  overallAverage,
+  classPosition,
+  classSize,
 }: PupilKPITilesProps) {
   const enteredScores = scores.filter(
     (score) => score.caScore !== null && score.examScore !== null
@@ -18,7 +25,12 @@ export default function PupilKPITiles({
     return sum + score.caScore + score.examScore;
   }, 0);
   const possible = enteredScores.length * 100;
-  const average = possible === 0 ? null : Math.round((total / possible) * 100);
+  const computedAverage =
+    enteredScores.length === 0
+      ? null
+      : Number((total / enteredScores.length).toFixed(2));
+  const average = overallAverage ?? computedAverage;
+  const position = formatClassPosition(classPosition, classSize);
   const tiles = [
     {
       Icon: BarChart3,
@@ -32,8 +44,8 @@ export default function PupilKPITiles({
       Icon: Trophy,
       iconBg: "bg-tertiary-container text-on-tertiary-container",
       label: "Term Average",
-      value: average === null ? "—" : `${average}%`,
-      suffix: average === null ? "No scores yet" : "of entered subjects",
+      value: average === null ? "—" : `${average.toFixed(1)}%`,
+      suffix: average === null ? "No scores yet" : position === "—" ? "of entered subjects" : position,
       valueColor: "text-on-tertiary-container",
     },
     {

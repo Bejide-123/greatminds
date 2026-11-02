@@ -16,6 +16,7 @@ import {
   normalisePsychomotor,
   PSYCHOMOTOR_TRAITS
 } from "@/lib/gradebook-api";
+import { computeGrade } from "@/lib/gradebook-data";
 
 function responseError(payload: unknown, fallback: string) {
   if (
@@ -35,6 +36,7 @@ export default function TeacherGradebook() {
   const [scores, setScores] = useState<GradebookScore[]>([]);
   const [psychomotor, setPsychomotorRatings] = useState<Record<string, number | null>>({});
   const [teacherRemark, setTeacherRemark] = useState("");
+  const [attendance, setAttendance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,6 +72,7 @@ export default function TeacherGradebook() {
         setScores(payload.students[0]?.scores ?? []);
         setPsychomotorRatings(normalisePsychomotor(payload.students[0]?.psychomotor));
         setTeacherRemark(payload.students[0]?.teacherRemark ?? "");
+        setAttendance(payload.students[0]?.attendance ?? null);
       } catch (loadError) {
         if (!controller.signal.aborted) {
           setError(
@@ -125,6 +128,7 @@ export default function TeacherGradebook() {
       setScores(student.scores);
       setPsychomotorRatings(normalisePsychomotor(student.psychomotor)); 
       setTeacherRemark(student.teacherRemark ?? "");
+      setAttendance(student.attendance ?? null);
       setDirty(false);
       setError(null);
       setNotice(null);
@@ -186,7 +190,9 @@ export default function TeacherGradebook() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             teacherRemark,
+            attendance,
             action,
+            psychomotor: normalisePsychomotor(psychomotor),
             scores: data.subjects.map((subject) => {
               const score = scores.find(
                 (item) => item.subjectId === subject.id,
@@ -217,6 +223,26 @@ export default function TeacherGradebook() {
       }
 
       const savedStatus = payload.status;
+      const returnedAverage =
+        "overallAverage" in payload &&
+        typeof (payload as { overallAverage?: unknown }).overallAverage === "number"
+          ? (payload as { overallAverage: number }).overallAverage
+          : null;
+
+      const updatedScores: GradebookScore[] = data.subjects.map((subject) => {
+        const score = scores.find((item) => item.subjectId === subject.id);
+        const ca = score?.caScore ?? null;
+        const exam = score?.examScore ?? null;
+        const total = ca !== null && exam !== null ? ca + exam : null;
+        return {
+          subjectId: subject.id,
+          caScore: ca,
+          examScore: exam,
+          totalScore: total,
+          grade: total === null ? null : computeGrade(total).grade,
+        };
+      });
+
       setData((current) =>
         current
           ? {
@@ -227,32 +253,17 @@ export default function TeacherGradebook() {
                       ...student,
                       status: savedStatus,
                       teacherRemark,
-                      psychomotor,
-                      scores: scores.map((score) => {
-                        if (
-                          score.caScore === null ||
-                          score.examScore === null
-                        ) {
-                          return { ...score, totalScore: null, grade: null };
-                        }
-                        return {
-                          ...score,
-                          totalScore: score.caScore + score.examScore,
-                        };
-                      }),
+            attendance,
+                      psychomotor: normalisePsychomotor(psychomotor),
+                      overallAverage: returnedAverage ?? student.overallAverage,
+                      scores: updatedScores,
                     }
                   : student,
               ),
             }
           : current,
       );
-      setScores((current) =>
-        current.map((score) =>
-          score.caScore === null || score.examScore === null
-            ? { ...score, totalScore: null, grade: null }
-            : { ...score, totalScore: score.caScore + score.examScore },
-        ),
-      );
+      setScores(updatedScores);
       setDirty(false);
       setNotice(
         action === "submit"
@@ -376,7 +387,13 @@ export default function TeacherGradebook() {
                 pupil={selectedStudent}
                 className={data.class.name}
               />
-              <PupilKPITiles subjects={data.subjects} scores={scores} />
+              <PupilKPITiles
+                subjects={data.subjects}
+                scores={scores}
+                overallAverage={selectedStudent.overallAverage}
+                classPosition={selectedStudent.classPosition}
+                classSize={selectedStudent.classSize}
+              />
             </div>
 
             <SubjectEntryTable
@@ -395,6 +412,13 @@ export default function TeacherGradebook() {
 
             <TeacherRemarksCard
               value={teacherRemark}
+              attendance={attendance}
+              onAttendanceChange={(val) => {
+                setAttendance(val);
+                setDirty(true);
+                setError(null);
+                setNotice(null);
+              }}
               onChange={(value) => {
                 setTeacherRemark(value);
                 setDirty(true);

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Smile, Trophy, ShieldCheck } from "lucide-react";
-import { CREST, REPORT_META, SIGNOFFS } from "@/lib/results-data";
+import { REPORT_META, SIGNOFFS } from "@/lib/results-data";
 import { useStudentResult } from "./StudentResultContext";
 
 const BADGE_ICON_MAP = {
@@ -97,10 +97,10 @@ export default function SignoffRow() {
             </span>
             <div className="w-7 h-7 my-0.5">
               <Image
-                src={CREST}
-                alt="Emblem"
-                width={28}
-                height={28}
+                src="/Greatminds-International-School-Crest.png"
+                alt="Greatminds International School Crest"
+                width={35}
+                height={35}
                 className="w-full h-full object-contain"
               />
             </div>
@@ -108,7 +108,7 @@ export default function SignoffRow() {
               OFFICIAL SEAL
             </span>
             <span className="font-tabular-data text-[7px] text-outline">
-              2024/2025
+              2026/2027 Academic Session
             </span>
           </div>
         </div>

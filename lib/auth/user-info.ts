@@ -14,17 +14,20 @@ type UserProfileSource = {
   username: string;
   role: Role;
   student?: {
+    id: string;
     firstName: string;
     otherName: string | null;
     surname: string;
     admissionNumber: string;
-    schoolClass: { name: string };
+    schoolClass: { id: string; name: string };
   } | null;
   teacher?: {
+    id: string;
     firstName: string;
     otherName: string | null;
     surname: string;
-    schoolClass: { name: string };
+    classId: string;
+    schoolClass: { id: string; name: string };
   } | null;
 };
 

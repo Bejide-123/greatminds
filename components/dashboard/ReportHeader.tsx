@@ -13,7 +13,7 @@ export default function ReportHeader() {
       <div className="flex items-center gap-space-lg">
         <div className="w-24 h-24 bg-surface-container-lowest rounded-xl shadow-sm p-2 flex items-center justify-center shrink-0 border border-surface-container">
           <Image
-            src={CREST}
+            src="/Greatminds-International-School-Crest.png"
             alt="Great Minds Nursery & Primary School Crest"
             width={96}
             height={96}

@@ -9,6 +9,7 @@ import {
   Users,
   BadgeCheck,
   CreditCard,
+  Table2,
   type LucideIcon,
 } from "lucide-react";
 import { CREST, NAV_ITEMS } from "@/lib/admin-data";
@@ -20,6 +21,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   users: Users,
   badge: BadgeCheck,
   payments: CreditCard,
+  table: Table2,
 };
 
 export default function AdminSidebar() {
@@ -30,8 +32,8 @@ export default function AdminSidebar() {
       <div className="flex flex-col">
         <div className="h-16 px-space-lg flex items-center gap-space-sm bg-[#08152b]">
           <Image
-            src={CREST}
-            alt="Great Minds International School Crest"
+            src="/Greatminds-International-School-Crest.png"
+            alt="Greatminds International School Crest"
             width={36}
             height={36}
             className="h-8 w-auto object-contain"

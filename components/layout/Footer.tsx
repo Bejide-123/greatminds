@@ -1,4 +1,6 @@
 import { Baby, MapPin, Phone, Mail, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 
 type FooterProps = {
   onOpenTour: () => void;
@@ -21,6 +23,12 @@ const CURRICULUM_LINKS = [
 ];
 
 export default function Footer({ onOpenTour }: FooterProps) {
+  const [year, setYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
+
   return (
     <footer className="w-full bg-surface-container-lowest text-on-surface pt-space-2xl pb-space-xl border-t border-surface-container">
       <div className="max-w-7xl mx-auto px-gutter-lg">
@@ -29,14 +37,20 @@ export default function Footer({ onOpenTour }: FooterProps) {
           <div className="lg:col-span-2 flex flex-col gap-space-md">
             <div className="flex items-center gap-space-md">
               <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary">
-                <Baby className="w-6 h-6" />
+                <Image
+                  src="/Greatminds-International-School-Crest.png"
+                  alt="Greatminds International School Crest"
+                  width={44}
+                  height={44}
+                  className="w-11 h-11 object-contain rounded-xl transition-transform group-hover:scale-105"
+                />
               </div>
               <div className="flex flex-col">
                 <span className="font-headline-sm text-headline-sm text-primary font-bold">
-                  Great Minds Junior
+                  Greatminds
                 </span>
                 <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">
-                  Nursery &amp; Primary School
+                  International School
                 </span>
               </div>
             </div>
@@ -46,16 +60,18 @@ export default function Footer({ onOpenTour }: FooterProps) {
               Checkpoint, and Nigerian Basic Education Curriculum.
             </p>
             <div className="flex items-center gap-space-sm pt-space-xs flex-wrap">
-              {["British EYFS", "Cambridge Primary", "Common Entrance 100%"].map(
-                (b) => (
-                  <span
-                    key={b}
-                    className="inline-flex items-center px-space-md py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm font-semibold"
-                  >
-                    {b}
-                  </span>
-                )
-              )}
+              {[
+                "British EYFS",
+                "Cambridge Primary",
+                "Common Entrance 100%",
+              ].map((b) => (
+                <span
+                  key={b}
+                  className="inline-flex items-center px-space-md py-1 rounded-full bg-surface-container text-primary font-label-sm text-label-sm font-semibold"
+                >
+                  {b}
+                </span>
+              ))}
             </div>
           </div>
 
@@ -82,7 +98,7 @@ export default function Footer({ onOpenTour }: FooterProps) {
                   >
                     {l.label}
                   </a>
-                )
+                ),
               )}
             </div>
           </div>
@@ -113,7 +129,8 @@ export default function Footer({ onOpenTour }: FooterProps) {
             <div className="flex flex-col gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
               <p className="flex items-start gap-space-xs">
                 <MapPin className="w-[18px] h-[18px] text-primary shrink-0 mt-0.5" />
-                17, Olarenwaju Oladunjoye street, off Ilo-Awela RD, Ota, Ogun State, Nigeria
+                17, Olarenwaju Oladunjoye street, off Ilo-Awela RD, Ota, Ogun
+                State, Nigeria
               </p>
               <p className="flex items-center gap-space-xs">
                 <Phone className="w-[18px] h-[18px] text-primary shrink-0" />
@@ -134,7 +151,7 @@ export default function Footer({ onOpenTour }: FooterProps) {
         {/* Bottom bar */}
         <div className="pt-space-lg flex flex-col md:flex-row items-center justify-between gap-space-md font-label-sm text-label-sm text-on-surface-variant border-t border-surface-container">
           <p>
-            © 2025 Great Minds Nursery &amp; Primary School Lagos. All rights
+            © {year ?? 2026} Great Minds International School. All rights
             reserved.
           </p>
           <div className="flex items-center gap-space-lg flex-wrap justify-center">

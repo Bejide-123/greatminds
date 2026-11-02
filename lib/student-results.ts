@@ -7,6 +7,8 @@ export type StudentResultSubject = {
   totalScore: number;
   grade: string | null;
   remark: string | null;
+  classAverage?: number | null;
+  subjectPosition?: number | null;
 };
 
 export type StudentResultRecord = {
@@ -30,6 +32,11 @@ export type StudentResultRecord = {
   teacherName: string;
   schoolClass: string;
   reviewedAt: string | null;
+  overallAverage: number | null;
+  classAverage?: number | null;
+  classPosition: number | null;
+  classSize: number | null;
+  psychomotor?: Record<string, number | null> | null;
   subjects: StudentResultSubject[];
 };
 

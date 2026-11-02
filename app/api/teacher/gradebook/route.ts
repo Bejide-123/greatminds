@@ -3,28 +3,47 @@ import { getCurrentUser } from "@/lib/auth/guard";
 import { getTeacherGradebookContext } from "@/lib/gradebook-service";
 import { prisma } from "@/lib/prisma";
 
+const NO_STORE = { "Cache-Control": "no-store" };
+
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Authentication required." },
+      { status: 401, headers: NO_STORE },
+    );
   }
   if (user.role !== "TEACHER") {
-    return NextResponse.json({ error: "Teacher access required." }, { status: 403 });
+    return NextResponse.json(
+      { error: "Teacher access required." },
+      { status: 403, headers: NO_STORE },
+    );
   }
 
   const context = await getTeacherGradebookContext(user.id);
   if ("error" in context) {
-    return NextResponse.json({ error: context.error }, { status: 409 });
+    return NextResponse.json(
+      { error: context.error },
+      { status: 409, headers: NO_STORE },
+    );
   }
 
-  const [subjects, students] = await Promise.all([
-    prisma.subject.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-      select: { id: true, code: true, name: true, sortOrder: true },
+  const classId = context.teacher.classId;
+
+  const [classSubjects, students] = await Promise.all([
+    // CHANGED: only the subjects this teacher's class takes, in report-card
+    // order, instead of every active subject in the school.
+    prisma.classSubject.findMany({
+      where: { classId, subject: { isActive: true } },
+      orderBy: { sortOrder: "asc" },
+      select: {
+        sortOrder: true,
+        isCompulsory: true,
+        subject: { select: { id: true, code: true, name: true } },
+      },
     }),
     prisma.student.findMany({
-      where: { classId: context.teacher.classId, status: "ACTIVE" },
+      where: { classId, status: "ACTIVE" },
       orderBy: [{ surname: "asc" }, { firstName: "asc" }],
       select: {
         id: true,
@@ -41,6 +60,10 @@ export async function GET() {
             teacherRemark: true,
             rejectionReason: true,
             psychomotor: true,
+            overallAverage: true,
+            classPosition: true,
+            classSize: true,
+            attendance: true,
             subjects: {
               select: {
                 subjectId: true,
@@ -55,6 +78,14 @@ export async function GET() {
       },
     }),
   ]);
+
+  // CHANGED: isCompulsory is sent so the screen can mark required subjects
+  // and warn before submit. The server must still re-check on submit.
+  const subjects = classSubjects.map((cs) => ({
+    ...cs.subject,
+    isCompulsory: cs.isCompulsory,
+    sortOrder: cs.sortOrder,
+  }));
 
   return NextResponse.json(
     {
@@ -76,6 +107,13 @@ export async function GET() {
           sex: student.sex,
           dateOfBirth: student.dateOfBirth.toISOString(),
           status: result?.status ?? null,
+          overallAverage:
+            result?.overallAverage === null || result?.overallAverage === undefined
+              ? null
+              : Number(result.overallAverage),
+          classPosition: result?.classPosition ?? null,
+          classSize: result?.classSize ?? null,
+          attendance: result?.attendance ?? null,
           teacherRemark: result?.teacherRemark ?? "",
           psychomotor: result?.psychomotor ?? {},
           rejectionReason: result?.rejectionReason ?? null,
@@ -92,6 +130,6 @@ export async function GET() {
         };
       }),
     },
-    { headers: { "Cache-Control": "no-store" } }
+    { headers: NO_STORE },
   );
 }
