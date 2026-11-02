@@ -30,12 +30,13 @@ export default function Navbar({ onOpenTour }: NavbarProps) {
     <div className="h-20 max-w-7xl mx-auto px-gutter-lg flex items-center justify-between">
       {/* Logo */}
       <Link href="#" className="flex items-center gap-space-md group">
-        <div className="w-11 h-11 rounded-2xl bg-primary flex items-center justify-center text-on-primary shadow-md relative overflow-hidden group-hover:scale-105 transition-transform">
-          <Baby className="w-[26px] h-[26px]" />
-          <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-secondary rounded-full flex items-center justify-center text-[9px] text-white font-bold">
-            <Star className="w-2.5 h-2.5 fill-white" />
-          </span>
-        </div>
+        <Image
+          src="/Greatminds-International-School-Crest.png"
+          alt="Greatminds International School Crest"
+          width={44}
+          height={44}
+          className="w-11 h-11 object-contain rounded-xl transition-transform group-hover:scale-105"
+        />
         <div className="flex flex-col">
           <span className="font-headline-sm text-headline-sm text-primary leading-tight font-extrabold flex items-center gap-1.5">
             Greatminds{" "}
@@ -72,7 +73,7 @@ export default function Navbar({ onOpenTour }: NavbarProps) {
             >
               {item.label}
             </a>
-          )
+          ),
         )}
 
         {/* Portals dropdown */}
@@ -93,7 +94,9 @@ export default function Navbar({ onOpenTour }: NavbarProps) {
                   >
                     <Icon
                       className={`w-[18px] h-[18px] ${
-                        p.icon === "backpack" ? "text-secondary" : "text-primary"
+                        p.icon === "backpack"
+                          ? "text-secondary"
+                          : "text-primary"
                       }`}
                     />
                     {p.label}

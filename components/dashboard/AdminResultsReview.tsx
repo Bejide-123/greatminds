@@ -38,6 +38,7 @@ export default function AdminResultsReview() {
   const [notice, setNotice] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [isSavingComment, setIsSavingComment] = useState(false);
 
   const reload = useCallback(async (signal?: AbortSignal) => {
     const response = await fetch("/api/admin/results", {
@@ -118,7 +119,7 @@ export default function AdminResultsReview() {
     selectedResult?.overallAverage ??
     (enteredScores.length === 0 ? 0 : aggregate / enteredScores.length);
 
-  async function review(action: "approve" | "return") {
+  async function review(action: "approve" | "return", comment?: string) {
     if (!selectedResult || !isPending) return;
     if (action === "return" && rejectionReason.trim().length === 0) {
       setError("Enter a note explaining what needs correction.");
@@ -136,7 +137,7 @@ export default function AdminResultsReview() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(
             action === "approve"
-              ? { action }
+              ? { action, headTeacherRemark: comment }
               : { action, rejectionReason: rejectionReason.trim() }
           ),
         }
@@ -179,6 +180,54 @@ export default function AdminResultsReview() {
       );
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleSaveComment(comment: string) {
+    if (!selectedResult) return;
+    setIsSavingComment(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const response = await fetch(
+        `/api/admin/results/${encodeURIComponent(selectedResult.id)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "saveRemark",
+            headTeacherRemark: comment,
+          }),
+        }
+      );
+      const payload: unknown = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          responseError(payload, "Unable to save headteacher comment.")
+        );
+      }
+
+      setData((current) =>
+        current
+          ? {
+              ...current,
+              results: current.results.map((r) =>
+                r.id === selectedResult.id
+                  ? { ...r, headTeacherRemark: comment.trim() || null }
+                  : r
+              ),
+            }
+          : current
+      );
+      setNotice("Headteacher remark saved successfully.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to save headteacher remark."
+      );
+    } finally {
+      setIsSavingComment(false);
     }
   }
 
@@ -393,10 +442,28 @@ export default function AdminResultsReview() {
                   </table>
                 </div>
 
-                {/* <PrincipalSignoff
-                  onConfirmPublish={}
-                  onReturnToTeacher={}
-                  /> */}
+                <PrincipalSignoff
+                  initialComment={selectedResult.headTeacherRemark}
+                  teacherRemark={selectedResult.teacherRemark}
+                  attendance={selectedResult.attendance}
+                  onSaveComment={handleSaveComment}
+                  onConfirmApprove={(comment) => void review("approve", comment)}
+                  onReturnToTeacher={() => {
+                    const el = document.getElementById("return-note");
+                    if (el) {
+                      el.scrollIntoView({ behavior: "smooth" });
+                      el.focus();
+                    }
+                  }}
+                  disabled={busy || isSavingComment}
+                  isSavingComment={isSavingComment}
+                  isApproving={busy}
+                  isApproved={
+                    selectedResult.status === "APPROVED" ||
+                    selectedResult.status === "PUBLISHED"
+                  }
+
+                />
 
                 {isPending ? (
                   <div className="flex flex-col gap-space-md rounded-xl border border-surface-container-high/60 bg-surface-container-lowest p-space-lg shadow-sm">

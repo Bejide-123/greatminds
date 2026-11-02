@@ -12,6 +12,9 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Greatminds International School Lagos",
+  icons: {
+    icon: "/Greatminds-International-School-Crest.png",
+  },
   description:
     "A loving, joyful haven where little learners from 18 months to 11 years master fluent early reading with Jolly Phonics, spark wonder with Lego STEM robotics, and grow into confident, kind young scholars.",
 };

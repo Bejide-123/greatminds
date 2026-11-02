@@ -5,7 +5,14 @@ import { prisma } from "@/lib/prisma";
 import { tryFinalizeClassPositions } from "@/lib/results/rankings";
 
 const reviewSchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("approve") }),
+  z.object({
+    action: z.literal("approve"),
+    headTeacherRemark: z.string().max(1500).optional(),
+  }),
+  z.object({
+    action: z.literal("saveRemark"),
+    headTeacherRemark: z.string().max(1500),
+  }),
   z.object({
     action: z.literal("return"),
     rejectionReason: z.string().trim().min(1).max(1000),
@@ -41,6 +48,29 @@ export async function PATCH(
   if (!existing) {
     return NextResponse.json({ error: "Result not found." }, { status: 404 });
   }
+
+  // Admin saving comment / headteacher remark without approving
+  if (parsed.data.action === "saveRemark") {
+    const updated = await prisma.result.update({
+      where: { id: resultId },
+      data: {
+        headTeacherRemark: parsed.data.headTeacherRemark.trim() || null,
+      },
+      select: {
+        id: true,
+        status: true,
+        headTeacherRemark: true,
+      },
+    });
+
+    return NextResponse.json({
+      status: updated.status,
+      headTeacherRemark: updated.headTeacherRemark,
+      message: "Comment saved successfully.",
+    });
+  }
+
+  // Approval or return requires submitted or under_review state
   if (existing.status !== "SUBMITTED" && existing.status !== "UNDER_REVIEW") {
     return NextResponse.json(
       { error: "Only submitted results can be reviewed." },
@@ -60,6 +90,9 @@ export async function PATCH(
             reviewedAt: new Date(),
             reviewedById: user.id,
             rejectionReason: null,
+            ...(parsed.data.headTeacherRemark !== undefined
+              ? { headTeacherRemark: parsed.data.headTeacherRemark.trim() || null }
+              : {}),
           }
         : {
             status: "REJECTED",

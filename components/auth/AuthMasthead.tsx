@@ -1,11 +1,18 @@
 import { School } from "lucide-react";
+import Image from "next/image";
 
 export default function AuthMasthead() {
   return (
     <header className="flex flex-col items-center text-center mb-8 lg:mb-12">
       <div className="flex items-center gap-3.5 mb-3">
         <div className="w-14 h-14 rounded-xl bg-primary-container text-on-primary flex items-center justify-center shadow-lg shadow-primary-container/20">
-          <School className="w-8 h-8 fill-current" />
+          <Image
+            src="/Greatminds-International-School-Crest.png"
+            alt="Greatminds International School Crest"
+            width={44}
+            height={44}
+            className="w-11 h-11 object-contain rounded-xl transition-transform group-hover:scale-105"
+          />
         </div>
         <div className="text-left">
           <span className="font-headline-lg text-headline-lg text-primary tracking-tight block leading-tight">

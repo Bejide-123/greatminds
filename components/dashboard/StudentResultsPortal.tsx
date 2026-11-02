@@ -12,7 +12,6 @@ import ResultsToolbar from "@/components/dashboard/ResultsToolbar";
 import SignoffRow from "@/components/dashboard/SignoffRow";
 import SubjectLedger from "@/components/dashboard/SubjectLedger";
 import { StudentResultProvider } from "@/components/dashboard/StudentResultContext";
-import { CREST } from "@/lib/results-data";
 import {
   isStudentResultsPayload,
   studentResultIsApproved,
@@ -116,7 +115,7 @@ export default function StudentResultsPortal() {
         <div className="bg-surface-container-lowest rounded-xl shadow-md p-space-xl lg:p-space-2xl flex flex-col gap-space-xl relative overflow-hidden">
           <div className="absolute -right-20 -bottom-20 opacity-[0.03] pointer-events-none select-none">
             <Image
-              src={CREST}
+              src="/Greatminds-International-School-Crest.png"
               alt="GMIS Watermark"
               width={384}
               height={384}

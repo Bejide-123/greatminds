@@ -4,14 +4,11 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { toUserInfo } from "./user-info";
 
-// Compared against when the username doesn't exist, so a wrong username and a
-// wrong password take about the same time (no user enumeration).
 const DUMMY_HASH = bcrypt.hashSync("not-a-real-password", 10);
 
 export async function authenticate(usernameInput: string, passwordInput: string) {
   const username = usernameInput.trim();
 
-  // Case-insensitive: "gmis/2027/123" finds "GMIS/2027/123".
   const user = await prisma.user.findFirst({
     where: { username: { equals: username, mode: "insensitive" } },
     select: {
@@ -23,25 +20,27 @@ export async function authenticate(usernameInput: string, passwordInput: string)
       passwordHash: true,
       student: {
         select: {
+          id: true,
           firstName: true,
           otherName: true,
           surname: true,
           admissionNumber: true,
-          schoolClass: { select: { name: true } },
+          schoolClass: { select: { id: true, name: true } },  // ✅ fixed
         },
       },
       teacher: {
         select: {
+          id: true,
           firstName: true,
           otherName: true,
           surname: true,
-          schoolClass: { select: { name: true } },
+          classId: true,                                       // ✅ added
+          schoolClass: { select: { id: true, name: true } },  // ✅ fixed
         },
       },
     },
   });
 
-  // Students log in with their surname, so ignore case and stray spaces.
   const password =
     user?.role === "STUDENT" ? passwordInput.trim().toLowerCase() : passwordInput;
 

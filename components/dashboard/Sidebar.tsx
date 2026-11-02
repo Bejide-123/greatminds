@@ -17,7 +17,7 @@ import {
   UserRound,
   type LucideIcon,
 } from "lucide-react";
-import { CREST, NAV_ITEMS } from "@/lib/dashboard-data";
+import { NAV_ITEMS } from "@/lib/dashboard-data";
 import LogoutButton from "./LogoutButton";
 import { useUser } from "@/components/auth/UserProvider";
 
@@ -42,7 +42,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="flex h-16 shrink-0 items-center gap-3 bg-[#08152b] px-4">
         <Image
-          src={CREST}
+          src="/Greatminds-International-School-Crest.png"
           alt="Great Minds Nursery & Primary Crest"
           width={36}
           height={36}

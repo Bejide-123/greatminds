@@ -6,19 +6,25 @@ import {
   getClassAverage,
   getClassSubjectMetrics,
 } from "@/lib/results/rankings";
+import {
+  getClassSubjectOrders,
+  sortBySubjectOrder,
+} from "@/lib/results/subject-order";
+
+const NO_STORE = { "Cache-Control": "no-store" };
 
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json(
       { error: "Authentication required." },
-      { status: 401 },
+      { status: 401, headers: NO_STORE },
     );
   }
   if (user.role !== "STUDENT") {
     return NextResponse.json(
       { error: "Student access required." },
-      { status: 403 },
+      { status: 403, headers: NO_STORE },
     );
   }
 
@@ -36,12 +42,13 @@ export async function GET() {
   if (!student) {
     return NextResponse.json(
       { error: "No student profile is linked to this account." },
-      { status: 409 },
+      { status: 409, headers: NO_STORE },
     );
   }
 
   const results = await prisma.result.findMany({
-    where: { studentId: student.id },
+    // Students only ever receive PUBLISHED results.
+    where: { studentId: student.id, status: "APPROVED" },
     orderBy: [{ updatedAt: "desc" }],
     select: {
       id: true,
@@ -73,7 +80,6 @@ export async function GET() {
         },
       },
       subjects: {
-        orderBy: { subject: { sortOrder: "asc" } },
         select: {
           id: true,
           subjectId: true,
@@ -88,16 +94,17 @@ export async function GET() {
     },
   });
 
+  // Report-card subject order for every class that appears (one query).
+  const subjectOrders = await getClassSubjectOrders(
+    results.map((r) => r.classId),
+  );
+
   const finalizedPairs = Array.from(
     new Set(
       results
-        .filter(
-          (r) =>
-            (r.status === "APPROVED" || r.status === "PUBLISHED") &&
-            r.classPosition !== null
-        )
-        .map((r) => `${r.classId}:::${r.termId}`)
-    )
+        .filter((r) => r.classPosition !== null)
+        .map((r) => `${r.classId}:::${r.termId}`),
+    ),
   ).map((key) => {
     const [classId, termId] = key.split(":::");
     return { classId, termId, key };
@@ -110,7 +117,7 @@ export async function GET() {
         getClassSubjectMetrics(classId, termId),
       ]);
       return { key, classAverage, subjectMetrics };
-    })
+    }),
   );
 
   const metricsMap = new Map(pairMetricsList.map((m) => [m.key, m]));
@@ -123,12 +130,15 @@ export async function GET() {
         className: student.schoolClass.name,
       },
       results: results.map((result) => {
-        const approved =
-          result.status === "APPROVED" || result.status === "PUBLISHED";
-        const finalized = approved && result.classPosition !== null;
-        const metrics = finalized
-          ? metricsMap.get(`${result.classId}:::${result.termId}`) ?? null
-          : null;
+        const metrics =
+          result.classPosition !== null
+            ? metricsMap.get(`${result.classId}:::${result.termId}`) ?? null
+            : null;
+
+        const orderedSubjects = sortBySubjectOrder(
+          result.subjects,
+          subjectOrders.get(result.classId) ?? new Map(),
+        );
 
         return {
           id: result.id,
@@ -139,15 +149,13 @@ export async function GET() {
           teacherRemark: result.teacherRemark ?? "",
           headTeacherRemark: result.headTeacherRemark ?? "",
           overallAverage:
-            approved && result.overallAverage !== null
+            result.overallAverage !== null
               ? Number(result.overallAverage)
               : null,
           classAverage: metrics?.classAverage ?? null,
-          classPosition: approved ? result.classPosition : null,
-          classSize: approved ? result.classSize : null,
-          psychomotor: approved
-            ? (result.psychomotor as Record<string, number | null> | null)
-            : null,
+          classPosition: result.classPosition,
+          classSize: result.classSize,
+          psychomotor: result.psychomotor as Record<string, number | null> | null,
           teacherName: [
             result.teacher.firstName,
             result.teacher.otherName,
@@ -162,40 +170,38 @@ export async function GET() {
             isCurrent: result.term.isCurrent,
             sessionIsCurrent: result.term.session.isCurrent,
           },
-          subjects: approved
-            ? result.subjects.flatMap((subject) => {
-                if (
-                  subject.caScore === null ||
-                  subject.examScore === null ||
-                  subject.totalScore === null
-                ) {
-                  return [];
-                }
+          subjects: orderedSubjects.flatMap((subject) => {
+            if (
+              subject.caScore === null ||
+              subject.examScore === null ||
+              subject.totalScore === null
+            ) {
+              return [];
+            }
 
-                const subjectMetric =
-                  metrics?.subjectMetrics.metricsByResultSubject.get(
-                    `${result.id}:${subject.subjectId}`
-                  );
+            const subjectMetric =
+              metrics?.subjectMetrics.metricsByResultSubject.get(
+                `${result.id}:${subject.subjectId}`,
+              );
 
-                return [
-                  {
-                    id: subject.id,
-                    subjectName: subject.subject.name,
-                    subjectCode: subject.subject.code,
-                    caScore: Number(subject.caScore),
-                    examScore: Number(subject.examScore),
-                    totalScore: Number(subject.totalScore),
-                    grade: subject.grade,
-                    remark: subject.remark,
-                    classAverage: subjectMetric?.classAverage ?? null,
-                    subjectPosition: subjectMetric?.subjectPosition ?? null,
-                  },
-                ];
-              })
-            : [],
+            return [
+              {
+                id: subject.id,
+                subjectName: subject.subject.name,
+                subjectCode: subject.subject.code,
+                caScore: Number(subject.caScore),
+                examScore: Number(subject.examScore),
+                totalScore: Number(subject.totalScore),
+                grade: subject.grade,
+                remark: subject.remark,
+                classAverage: subjectMetric?.classAverage ?? null,
+                subjectPosition: subjectMetric?.subjectPosition ?? null,
+              },
+            ];
+          }),
         };
       }),
     },
-    { headers: { "Cache-Control": "no-store" } },
+    { headers: NO_STORE },
   );
 }

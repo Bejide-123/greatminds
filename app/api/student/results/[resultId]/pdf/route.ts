@@ -7,9 +7,15 @@ import {
   getClassAverage,
   getClassSubjectMetrics,
 } from "@/lib/results/rankings";
+import {
+  getClassSubjectOrder,
+  sortBySubjectOrder,
+} from "@/lib/results/subject-order";
 import StudentReportPdfDocument, {
   type StudentReportPdfData,
 } from "@/components/pdf/StudentReportPdfDocument";
+
+const NO_STORE = { "Cache-Control": "no-store" };
 
 export async function GET(
   request: Request,
@@ -19,7 +25,7 @@ export async function GET(
   if (!user) {
     return NextResponse.json(
       { error: "Authentication required." },
-      { status: 401 }
+      { status: 401, headers: NO_STORE }
     );
   }
 
@@ -41,11 +47,7 @@ export async function GET(
         },
       },
       teacher: {
-        select: {
-          firstName: true,
-          otherName: true,
-          surname: true,
-        },
+        select: { firstName: true, otherName: true, surname: true },
       },
       schoolClass: { select: { name: true } },
       term: {
@@ -56,7 +58,6 @@ export async function GET(
         },
       },
       subjects: {
-        orderBy: { subject: { sortOrder: "asc" } },
         include: {
           subject: { select: { name: true, code: true } },
         },
@@ -65,34 +66,71 @@ export async function GET(
   });
 
   if (!result) {
-    return NextResponse.json({ error: "Result not found." }, { status: 404 });
+    return NextResponse.json(
+      { error: "Result not found." },
+      { status: 404, headers: NO_STORE }
+    );
   }
 
-  // Access control:
-  // If the requester is a student, ensure this result belongs to them.
-  if (user.role === "STUDENT" && result.student.userId !== user.id) {
+  // ---- Access control -----------------------------------------------------
+  const isPublished = result.status === "PUBLISHED";
+  const isApprovedOrPublished = isPublished || result.status === "APPROVED";
+
+  if (user.role === "STUDENT") {
+    if (result.student.userId !== user.id) {
+      return NextResponse.json(
+        { error: "Result not found." },
+        { status: 404, headers: NO_STORE }
+      );
+    }
+    if (!isApprovedOrPublished) {
+      return NextResponse.json(
+        {
+          error:
+            "This result has not been approved yet. It will be available once school administration approves it.",
+        },
+        { status: 403, headers: NO_STORE }
+      );
+    }
+  } else if (user.role === "TEACHER") {
+    const teacher = await prisma.teacher.findUnique({
+      where: { userId: user.id },
+      select: { classId: true },
+    });
+    if (!teacher || teacher.classId !== result.classId) {
+      return NextResponse.json(
+        { error: "You are not authorized to view this result." },
+        { status: 403, headers: NO_STORE }
+      );
+    }
+    if (!isApprovedOrPublished) {
+      return NextResponse.json(
+        { error: "This result has not been approved yet." },
+        { status: 403, headers: NO_STORE }
+      );
+    }
+  } else if (user.role === "ADMIN") {
+    if (!isApprovedOrPublished) {
+      return NextResponse.json(
+        { error: "This result has not been approved yet." },
+        { status: 403, headers: NO_STORE }
+      );
+    }
+  } else {
     return NextResponse.json(
       { error: "You are not authorized to view this result." },
-      { status: 403 }
+      { status: 403, headers: NO_STORE }
     );
   }
+  // -------------------------------------------------------------------------
 
-  // Results must be APPROVED or PUBLISHED to download the official report.
-  if (result.status !== "APPROVED" && result.status !== "PUBLISHED") {
-    return NextResponse.json(
-      {
-        error:
-          "This result has not been approved yet. Reports are available once certified by school administration.",
-      },
-      { status: 403 }
-    );
-  }
-
-  // Fetch cohort metrics (class average and per-subject averages/rankings)
-  const [classAverage, subjectMetrics] = await Promise.all([
+  const [classAverage, subjectMetrics, subjectOrder] = await Promise.all([
     getClassAverage(result.classId, result.termId),
     getClassSubjectMetrics(result.classId, result.termId),
+    getClassSubjectOrder(result.classId),
   ]);
+
+  const orderedSubjects = sortBySubjectOrder(result.subjects, subjectOrder);
 
   const studentFullName = [
     result.student.firstName,
@@ -110,7 +148,7 @@ export async function GET(
     .filter(Boolean)
     .join(" ");
 
-  const mappedSubjects = result.subjects.flatMap((s) => {
+  const mappedSubjects = orderedSubjects.flatMap((s) => {
     if (s.caScore === null || s.examScore === null || s.totalScore === null) {
       return [];
     }
@@ -175,14 +213,14 @@ export async function GET(
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${filename}"`,
-        "Cache-Control": "private, max-age=3600",
+        "Cache-Control": "private, no-store",
       },
     });
   } catch (renderError) {
     console.error("PDF generation error:", renderError);
     return NextResponse.json(
       { error: "Failed to generate report sheet PDF." },
-      { status: 500 }
+      { status: 500, headers: NO_STORE }
     );
   }
 }

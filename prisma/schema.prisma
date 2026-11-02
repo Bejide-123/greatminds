@@ -1,4 +1,4 @@
-// Great Minds International School — Results MVP schema
+// Greatminds International School — Results MVP schema
 // PostgreSQL + Prisma
 
 generator client {
@@ -78,6 +78,7 @@ model SchoolClass {
   sortOrder Int    @default(0) // for ordering and, later, promotion
 
   students Student[]
+  subjects ClassSubject[]
   teachers Teacher[]
   results  Result[]
 }
@@ -107,11 +108,23 @@ model Subject {
   id           String  @id @default(cuid())
   name         String  @unique
   code         String  @unique
-  isCompulsory Boolean @default(false) // submit is blocked if a compulsory subject is missing
   isActive     Boolean @default(true)
-  sortOrder    Int     @default(0) // report card shows subjects in a fixed order
 
   resultSubjects ResultSubject[]
+  classSubjects ClassSubject[]
+}
+
+model ClassSubject {
+  id           String      @id @default(cuid())
+  classId      String
+  schoolClass  SchoolClass @relation(fields: [classId], references: [id])
+  subjectId    String
+  subject      Subject     @relation(fields: [subjectId], references: [id])
+  isCompulsory Boolean     @default(false)
+  sortOrder    Int         @default(0)
+
+  @@unique([classId, subjectId])
+  @@index([classId])
 }
 
 // ───────────────────────── People ─────────────────────────
@@ -199,6 +212,7 @@ model Result {
   // General remarks for the student's overall performance
   teacherRemark     String?
   headTeacherRemark String?
+  attendance        Json?
   psychomotor Json?
 
   overallAverage Decimal? @db.Decimal(5, 2)

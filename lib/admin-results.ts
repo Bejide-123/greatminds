@@ -28,6 +28,7 @@ export type AdminResultRecord = {
   overallAverage: number | null;
   classPosition: number | null;
   classSize: number | null;
+  attendance: number | null;
   subjects: AdminResultSubject[];
 };
 

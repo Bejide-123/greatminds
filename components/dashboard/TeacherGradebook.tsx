@@ -36,6 +36,7 @@ export default function TeacherGradebook() {
   const [scores, setScores] = useState<GradebookScore[]>([]);
   const [psychomotor, setPsychomotorRatings] = useState<Record<string, number | null>>({});
   const [teacherRemark, setTeacherRemark] = useState("");
+  const [attendance, setAttendance] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,6 +72,7 @@ export default function TeacherGradebook() {
         setScores(payload.students[0]?.scores ?? []);
         setPsychomotorRatings(normalisePsychomotor(payload.students[0]?.psychomotor));
         setTeacherRemark(payload.students[0]?.teacherRemark ?? "");
+        setAttendance(payload.students[0]?.attendance ?? null);
       } catch (loadError) {
         if (!controller.signal.aborted) {
           setError(
@@ -126,6 +128,7 @@ export default function TeacherGradebook() {
       setScores(student.scores);
       setPsychomotorRatings(normalisePsychomotor(student.psychomotor)); 
       setTeacherRemark(student.teacherRemark ?? "");
+      setAttendance(student.attendance ?? null);
       setDirty(false);
       setError(null);
       setNotice(null);
@@ -187,6 +190,7 @@ export default function TeacherGradebook() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             teacherRemark,
+            attendance,
             action,
             psychomotor: normalisePsychomotor(psychomotor),
             scores: data.subjects.map((subject) => {
@@ -249,6 +253,7 @@ export default function TeacherGradebook() {
                       ...student,
                       status: savedStatus,
                       teacherRemark,
+            attendance,
                       psychomotor: normalisePsychomotor(psychomotor),
                       overallAverage: returnedAverage ?? student.overallAverage,
                       scores: updatedScores,
@@ -407,6 +412,13 @@ export default function TeacherGradebook() {
 
             <TeacherRemarksCard
               value={teacherRemark}
+              attendance={attendance}
+              onAttendanceChange={(val) => {
+                setAttendance(val);
+                setDirty(true);
+                setError(null);
+                setNotice(null);
+              }}
               onChange={(value) => {
                 setTeacherRemark(value);
                 setDirty(true);

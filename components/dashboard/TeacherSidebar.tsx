@@ -12,7 +12,7 @@ import {
   Clock,
   type LucideIcon,
 } from "lucide-react";
-import { CREST, NAV_ITEMS } from "@/lib/teacher-data";
+import { NAV_ITEMS } from "@/lib/teacher-data";
 import LogoutButton from "./LogoutButton";
 import { useUser } from "@/components/auth/UserProvider";
 
@@ -35,7 +35,7 @@ export default function TeacherSidebar() {
         {/* Logo */}
         <div className="h-16 px-space-lg flex items-center gap-space-sm bg-[#08152b]">
           <Image
-            src={CREST}
+            src="/Greatminds-International-School-Crest.png"
             alt="Great Minds Nursery and Primary School Crest"
             width={36}
             height={36}

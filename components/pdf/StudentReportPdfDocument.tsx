@@ -10,9 +10,12 @@ import {
   Rect,
   Circle,
 } from "@react-pdf/renderer";
+import { Image } from "@react-pdf/renderer";
 import { formatClassPosition, formatOrdinal } from "@/lib/results/format";
 import { computeGrade } from "@/lib/gradebook-data";
 import { PSYCHOMOTOR_TRAITS } from "@/lib/gradebook-api";
+import path from "path";
+import fs from "fs";
 
 export type StudentReportPdfData = {
   student: {
@@ -234,13 +237,33 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   colNum: { width: "4%", textAlign: "center", fontSize: 6.5 },
-  colSubject: { width: "32%", paddingLeft: 4, fontSize: 7, fontFamily: "Helvetica-Bold" },
+  colSubject: {
+    width: "32%",
+    paddingLeft: 4,
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+  },
   colScore: { width: "9%", textAlign: "center", fontSize: 7 },
-  colTotal: { width: "10%", textAlign: "center", fontSize: 7.5, fontFamily: "Helvetica-Bold" },
-  colGrade: { width: "11%", textAlign: "center", fontSize: 7, fontFamily: "Helvetica-Bold" },
+  colTotal: {
+    width: "10%",
+    textAlign: "center",
+    fontSize: 7.5,
+    fontFamily: "Helvetica-Bold",
+  },
+  colGrade: {
+    width: "11%",
+    textAlign: "center",
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+  },
   colRemark: { width: "12%", textAlign: "center", fontSize: 6.5 },
   colClassAvg: { width: "11%", textAlign: "center", fontSize: 7 },
-  colPosition: { width: "11%", textAlign: "center", fontSize: 7, fontFamily: "Helvetica-Bold" },
+  colPosition: {
+    width: "11%",
+    textAlign: "center",
+    fontSize: 7,
+    fontFamily: "Helvetica-Bold",
+  },
 
   // Middle Section (Grading Scale + Psychomotor)
   middleContainer: {
@@ -419,28 +442,6 @@ const styles = StyleSheet.create({
   },
 });
 
-function SchoolLogo() {
-  return (
-    <Svg width="44" height="44" viewBox="0 0 100 100">
-      <Circle cx="50" cy="50" r="48" fill="#0B1D3A" />
-      <Circle cx="50" cy="50" r="42" fill="#FFFFFF" />
-      <Circle cx="50" cy="50" r="38" fill="#0B1D3A" />
-      <Path
-        d="M50 20 L68 32 L68 56 C68 70 50 80 50 80 C50 80 32 70 32 56 L32 32 Z"
-        fill="#D97706"
-      />
-      <Path
-        d="M50 25 L64 35 L64 54 C64 65 50 73 50 73 C50 73 36 65 36 54 L36 35 Z"
-        fill="#0B1D3A"
-      />
-      <Circle cx="50" cy="42" r="7" fill="#FFFFFF" />
-      <Path
-        d="M40 58 Q50 50 60 58 Q50 54 40 58 Z"
-        fill="#D97706"
-      />
-    </Svg>
-  );
-}
 
 const GRADING_SCALE_ROWS = [
   { grade: "A*", range: "90% - 100%", remark: "Distinction" },
@@ -451,6 +452,13 @@ const GRADING_SCALE_ROWS = [
   { grade: "E", range: "40% - 49%", remark: "Weak Pass" },
   { grade: "F", range: "0% - 39%", remark: "Needs Support" },
 ];
+
+const crestPath = path.join(
+  process.cwd(),
+  "public",
+  "Greatminds-International-School-Crest.png",
+);
+const crestDataUrl = `data:image/png;base64,${fs.readFileSync(crestPath).toString("base64")}`;
 
 export default function StudentReportPdfDocument({
   data,
@@ -469,8 +477,8 @@ export default function StudentReportPdfDocument({
     result.overallAverage !== null && result.overallAverage !== undefined
       ? result.overallAverage
       : subjects.length > 0
-      ? aggregate / subjects.length
-      : 0;
+        ? aggregate / subjects.length
+        : 0;
 
   const gradeInfo = computeGrade(average);
 
@@ -496,11 +504,12 @@ export default function StudentReportPdfDocument({
     key: t.key,
     label: t.label,
     wide: t.wide,
-    rating: typeof ratings[t.key] === "number" ? (ratings[t.key] as number) : null,
+    rating:
+      typeof ratings[t.key] === "number" ? (ratings[t.key] as number) : null,
   }));
   const earnedPsychomotor = psychomotorEntries.reduce(
     (sum, t) => sum + (t.rating ?? 0),
-    0
+    0,
   );
   const maxPsychomotor = PSYCHOMOTOR_TRAITS.length * 5;
   const psychomotorPct =
@@ -515,16 +524,23 @@ export default function StudentReportPdfDocument({
         <View style={styles.headerContainer}>
           <View style={styles.headerLeft}>
             <View style={styles.logoContainer}>
-              <SchoolLogo />
+              <Image
+                src={crestDataUrl}
+                style={{ width: 60, height: 60, objectFit: "contain" }}
+              />
             </View>
             <View style={styles.schoolInfo}>
-              <Text style={styles.schoolName}>GREATMINDS INTERNATIONAL SCHOOL</Text>
+              <Text style={styles.schoolName}>
+                GREATMINDS INTERNATIONAL SCHOOL
+              </Text>
               <Text style={styles.schoolMotto}>“Teaching To Dominate”</Text>
               <Text style={styles.schoolAddress}>
-                17, Olarenwaju Oladunjoye St., off Ilo-Awela Rd, Ota, Ogun State, Nigeria
+                17, Olarenwaju Oladunjoye St., off Ilo-Awela Rd, Ota, Ogun
+                State, Nigeria
               </Text>
               <Text style={styles.schoolContact}>
-                Tel: +234 8028010867 / +234 802319338 | Web: www.greatmindsschool.edu.ng
+                Tel: +234 8028010867 / +234 802319338 | Web:
+                www.greatmindsschool.edu.ng
               </Text>
             </View>
           </View>
@@ -618,7 +634,7 @@ export default function StudentReportPdfDocument({
         {/* Subject Assessment Table */}
         <View style={styles.tableContainer}>
           <View style={styles.tableHeader}>
-            <Text style={styles.colNum}>#</Text>
+            <Text style={styles.colNum}></Text>
             <Text style={styles.colSubject}>Subject Title</Text>
             <Text style={styles.colScore}>CA (40)</Text>
             <Text style={styles.colScore}>Exam (60)</Text>
@@ -652,7 +668,9 @@ export default function StudentReportPdfDocument({
                     : "—"}
                 </Text>
                 <Text style={styles.colPosition}>
-                  {sub.subjectPosition ? formatOrdinal(sub.subjectPosition) : "—"}
+                  {sub.subjectPosition
+                    ? formatOrdinal(sub.subjectPosition)
+                    : "—"}
                 </Text>
               </View>
             );
@@ -773,7 +791,9 @@ export default function StudentReportPdfDocument({
           {/* Seal / Certification */}
           <View style={styles.sealCard}>
             <Text style={styles.sealTitle}>✓ Certified Official Record</Text>
-            <Text style={styles.sealAuth}>AUTH: GMIS-PRI-{result.id.slice(-8).toUpperCase()}</Text>
+            <Text style={styles.sealAuth}>
+              AUTH: GMIS-PRI-{result.id.slice(-8).toUpperCase()}
+            </Text>
             <View style={styles.resumptionBadge}>
               <Text style={styles.resumptionText}>Next Term Resumption:</Text>
               <Text style={[styles.resumptionText, { color: "#D97706" }]}>
