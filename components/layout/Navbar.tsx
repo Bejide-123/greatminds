@@ -111,11 +111,11 @@ export default function Navbar({ onOpenTour }: NavbarProps) {
       {/* Right CTAs */}
       <div className="flex items-center gap-space-md">
         <a
-          href="#admissions-journey"
+          href="/auth"
           className="inline-flex items-center gap-space-xs px-space-lg py-2 rounded-xl bg-secondary text-white hover:bg-orange-600 font-label-md text-label-md transition-all shadow-md shadow-secondary/20 hover:scale-105 active:scale-95"
         >
           <UserCheck className="w-[18px] h-[18px]" />
-          Apply for Admission
+          Login
         </a>
         <Button
           variant="ghost"
